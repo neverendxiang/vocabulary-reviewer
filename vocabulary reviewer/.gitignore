@@ -1,0 +1,12 @@
+definitions_cache.json
+wrong_answers.json
+progress.json
+progress.backup.json
+progress.json.tmp
+oxford_mdx_index.json
+longman_mdx_index.json
+longman_phrasal_mdx_index.json
+__pycache__/
+android/.gradle/
+android/local.properties
+android/**/build/

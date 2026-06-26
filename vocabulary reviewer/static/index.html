@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1f7a5c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Vocabulary Reviewer</title>
+    <link rel="stylesheet" href="/styles.css?v=mobile4-20260622">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="side-panel">
+        <div class="session-heading">
+          <p class="eyebrow">Vocabulary Reviewer</p>
+          <h1>Quiz Session</h1>
+        </div>
+
+        <section class="stats-grid" aria-label="Session stats">
+          <div>
+            <span id="stat-seen">0</span>
+            <label>Seen</label>
+          </div>
+          <div>
+            <span id="stat-correct">0</span>
+            <label>Correct</label>
+          </div>
+          <div>
+            <span id="stat-wrong">0</span>
+            <label>Wrong</label>
+          </div>
+        </section>
+
+        <div class="mode-tabs" role="tablist" aria-label="Question type">
+          <button id="mode-all" class="active" type="button">All</button>
+          <button id="mode-mc" type="button">Choices</button>
+          <button id="mode-form" type="button">Forms</button>
+        </div>
+
+        <button id="reset-progress-btn" class="secondary danger" type="button">Reset progress</button>
+        <p id="save-status" class="save-status">Progress autosaves</p>
+      </aside>
+
+      <section class="quiz-panel" aria-live="polite">
+        <div class="quiz-topline">
+          <span id="category-pill">Loading</span>
+          <span id="progress-text">0 / 0</span>
+        </div>
+
+        <div id="question-area" class="question-area">
+          <p class="loading">Loading workbook...</p>
+        </div>
+
+        <div id="answer-area" class="answer-area"></div>
+
+        <div id="feedback" class="feedback hidden"></div>
+
+        <div class="actions">
+          <button id="next-btn" type="button" disabled>Next</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js?v=mobile-20260622"></script>
+  </body>
+</html>
