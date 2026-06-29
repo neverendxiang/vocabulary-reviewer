@@ -10,6 +10,7 @@ const state = {
   lastAnswer: null,
   mode: "all",
   restored: false,
+  serverSavedAt: 0,
 };
 
 const els = {
@@ -126,6 +127,7 @@ function progressPayload(indexOverride = null) {
     wrong: state.wrong,
     queue_ids: state.queue.map((item) => item.id),
     total: state.queue.length,
+    client_base_saved_at: state.serverSavedAt || 0,
   };
 }
 
@@ -138,7 +140,16 @@ async function saveProgress(indexOverride = null) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(progressPayload(indexOverride)),
     });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 409 && data.progress) {
+      if (restoreProgress(data.progress)) {
+        renderCurrent();
+        setSaveStatus("Progress synced from server");
+        return;
+      }
+    }
     if (!response.ok) throw new Error("Progress save failed");
+    state.serverSavedAt = Number(data.progress?.saved_at) || state.serverSavedAt;
     setSaveStatus("Progress saved");
   } catch {
     setSaveStatus("Progress not saved");
@@ -147,7 +158,7 @@ async function saveProgress(indexOverride = null) {
 
 async function loadSavedProgress() {
   try {
-    const response = await fetch("/api/progress");
+    const response = await fetch(`/api/progress?t=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) return null;
     const data = await response.json();
     return data.progress || null;
@@ -183,6 +194,7 @@ function restoreProgress(progress) {
   state.correct = Number(progress.correct) || 0;
   state.wrong = Number(progress.wrong) || 0;
   state.restored = true;
+  state.serverSavedAt = Number(progress.saved_at) || 0;
   setSaveStatus("Progress restored");
   return true;
 }
@@ -544,6 +556,16 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+async function syncProgressFromServer() {
+  if (!state.allItems.length || !state.queue.length) return;
+  const saved = await loadSavedProgress();
+  const remoteSavedAt = Number(saved?.saved_at) || 0;
+  if (remoteSavedAt && remoteSavedAt > (state.serverSavedAt || 0) && restoreProgress(saved)) {
+    renderCurrent();
+    setSaveStatus("Progress synced from server");
+  }
+}
+
 async function init() {
   const response = await fetch("/api/items");
   const data = await response.json();
@@ -559,6 +581,7 @@ async function init() {
 els.next.addEventListener("click", nextQuestion);
 els.reset.addEventListener("click", async () => {
   await fetch("/api/progress", { method: "DELETE" }).catch(() => {});
+  state.serverSavedAt = 0;
   setSaveStatus("Progress reset");
   rebuildQueue(true);
 });
@@ -595,8 +618,11 @@ window.addEventListener("pagehide", saveProgressBeforeExit);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") {
     saveProgressBeforeExit();
+  } else {
+    syncProgressFromServer();
   }
 });
+window.addEventListener("focus", syncProgressFromServer);
 
 init().catch((error) => {
   els.question.innerHTML = `<p class="definition">Could not load quiz data.</p><p>${escapeHtml(error.message)}</p>`;

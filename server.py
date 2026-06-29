@@ -478,6 +478,19 @@ def load_progress_file() -> Any:
     return load_json_file(PROGRESS_BACKUP_FILE, None)
 
 
+def progress_timestamp() -> int:
+    return int(time.time() * 1000)
+
+
+def progress_saved_at(data: Any) -> int:
+    if not isinstance(data, dict):
+        return 0
+    try:
+        return int(data.get("saved_at") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def save_progress_file(data: Any) -> None:
     with FILE_WRITE_LOCK:
         if PROGRESS_FILE.exists():
@@ -842,6 +855,7 @@ class AppHandler(BaseHTTPRequestHandler):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -915,9 +929,19 @@ class AppHandler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/progress":
-            payload["saved_at"] = int(time.time())
+            current = load_progress_file()
+            current_saved_at = progress_saved_at(current)
+            try:
+                client_base_saved_at = int(payload.get("client_base_saved_at") or 0)
+            except (TypeError, ValueError):
+                client_base_saved_at = 0
+            if current_saved_at and current_saved_at > client_base_saved_at:
+                self.send_json({"ok": False, "conflict": True, "progress": current}, status=409)
+                return
+            payload.pop("client_base_saved_at", None)
+            payload["saved_at"] = progress_timestamp()
             save_progress_file(payload)
-            self.send_json({"ok": True})
+            self.send_json({"ok": True, "progress": payload})
             return
 
         if not payload.get("correct"):
