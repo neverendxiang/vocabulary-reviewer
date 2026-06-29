@@ -16,6 +16,36 @@ http://127.0.0.1:8000
 
 To use the app on a phone, keep the computer and phone on the same Wi-Fi network, leave the server running, and open `http://<computer-LAN-IP>:8000` on the phone. The server listens on the local network by default. Windows Firewall may ask you to allow Python on private networks.
 
+## Ubuntu Service
+
+After cloning the project on an Ubuntu server, run the installer from the project folder:
+
+```bash
+sudo bash ./install_vcb_rver.sh
+```
+
+It registers and starts a `systemd` service named `vcb_rver`, using the cloned folder as the app directory. The service starts automatically after reboot.
+
+Useful commands:
+
+```bash
+sudo systemctl status vcb_rver
+journalctl -u vcb_rver -f
+sudo systemctl restart vcb_rver
+```
+
+Service settings are stored in:
+
+```text
+/etc/default/vcb_rver
+```
+
+Edit that file to change `VOCAB_PORT`, `VOCAB_HOST`, or the Ubuntu paths to your Oxford/Longman `.mdx` dictionaries. Then restart:
+
+```bash
+sudo systemctl restart vcb_rver
+```
+
 ## Notes
 
 - The app reads vocabulary rows from workbook sheets that have the vocabulary headers.
